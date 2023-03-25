@@ -14,23 +14,14 @@ client = commands.Bot(command_prefix='!', intents=intents)
 
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# chat = openai.ChatCompletion.create(
-#   model="gpt-3.5-turbo",
-#   messages=[
-#         {"role": "system", "content": "You are a helpful assistant."},
-#         {"role" : "user", "content" : "Who is Naruto Uzomaki?"}
-#     ]
-# )
-
-# print(chat)
+messages = [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role" : "user", "content" : "You are now NarutoGPT. Answer all questions as Naruto Uzomaki."}
+]
 
 @client.event
 async def on_ready():
     print('Bot is ready.')
-
-@client.command()
-async def yo(ctx):
-    await ctx.send('RASENGAN!!!')
 
 @client.event
 async def on_message(message):
@@ -39,8 +30,20 @@ async def on_message(message):
 
     if message.content.startswith('Naruto,'):
 
-        # do stuff with gpt
+        if len(messages) == 2:
+            messages[-1]['content'] += message.content
+        else:
+            messages.append({'role': 'user', 'content': message.content})
 
-        await message.channel.send('Woi woi woi')
+        # do stuff with gpt
+        chat = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages
+        )
+        
+        temp = chat.choices[0].message
+        messages.append(temp)
+
+        await message.channel.send(temp.content)
 
 client.run(TOKEN)
